@@ -1,14 +1,18 @@
 import './App.css';
 import EditorComponent from './Editor';
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import Home from './Home';
 
 function App() {
   return (
     <>
       <div>
-        <div style={{ height: '50px', backgroundColor: '#282c34', color: 'white', display: 'flex', alignItems: 'center', paddingLeft: '20px' }}>
-          <h1>Share your Code</h1>
-        </div>
-        <EditorComponent />
+       <BrowserRouter>
+         <Routes>
+          <Route path="/" element={<Home/>} />
+           <Route path="/:roomId" element={<EditorComponent />} />
+         </Routes>
+       </BrowserRouter>
       </div>
     </>
   )
