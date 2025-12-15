@@ -1,39 +1,34 @@
 import Editor from '@monaco-editor/react';
 import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 function EditorComponent() {
     const [code, setCode] = useState('// Start coding...');
-    const ref = useRef(null);
+    const [status, setStatus] = useState('disconnected');
+    const wsRef = useRef(null);
+    const { roomId } = useParams();
 
-    useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080");
+  
+  useEffect(() => {
+    // connect to WebSocket backend with roomId
+    const ws = new WebSocket(`ws://localhost:8080?room=${roomId}`);
+    wsRef.current = ws;
 
-        ws.onopen = () => {
-            console.log("Connected to WebSocket server");
-        };
+    ws.onopen = () => setStatus("connected");
 
-        ws.onmessage = (event) => {
-            try {
-            const data = JSON.parse(event.data);
-            if (data.type === "update") {
-                setCode(data.text);
-            }
-            } catch (err) {
-            console.error("❌ Error parsing message:", err);
-            }
-        };
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "update") setCode(data.text);
+    };
 
-        ws.onclose = () => {
-            console.log("Disconnected from WebSocket server");
-        };
-        ref.current = ws;
-        return () => {
-            ws.close();
-        };
-    }, []);
+    ws.onclose = () => setStatus("disconnected");
+    ws.onerror = () => setStatus("error");
+
+    return () => ws.close();
+  }, [roomId]);
     const handleEditorChange = (value) => {
        setCode(value);
-       if (ref.current && ref.current.readyState === WebSocket.OPEN) {
-           ref.current.send(JSON.stringify({ type: "update", text: value }));
+       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+           wsRef.current.send(JSON.stringify({ type: "update", text: value }));
        }
     };
     return (
